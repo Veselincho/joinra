@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>joinra</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: none;
+      font-family: sans-serif;
+      color: #eee;
+    }
+    .container {
+      /* Запълва целия прозорец */
+      width: 100%;
+      height: 100%;
+      background: #222;
+      padding: 30px;
+      /* Махаме скоса, за да няма бели ръбове */
+      border-radius: 0;
+      overflow: auto;
+      /* Позволява резайз */
+      display: flex;
+      flex-direction: column;
+    }
+    .input-group { margin-bottom: 16px; text-align: left; }
+    .input-group label {
+      display: block; margin-bottom: 4px; font-size: 14px;
+    }
+    input[type="text"], select {
+      width: 100%; padding: 10px; font-size: 15px;
+      border-radius: 6px; border: none;
+    }
+    select { background: #333; color: #fff; }
+    select:focus { outline: 2px solid #0096ff; }
+    button {
+      padding: 10px 16px; font-size: 16px;
+      background: #0096ff; border: none; border-radius: 6px;
+      color: #fff; cursor: pointer; margin: 4px;
+    }
+    button:hover { background: #007acc; }
+    #buttonGroup { display: flex; justify-content: space-between; }
+    #folderGroup { display: flex; gap: 8px; }
+    #folderPath { flex: 1; }
+
+    #loading-container {
+      display: none; margin-top: 12px; text-align: center;
+    }
+    #loading-container img { width: 48px; height: 48px; }
+    #chronometer {
+      margin-top: 6px; font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #progressContainer {
+      display: none; margin-top: 12px; text-align: left;
+    }
+    #downloadProgress {
+      width: 100%; height: 14px; appearance: none;
+      background: #444; border-radius: 6px; overflow: hidden;
+    }
+    #downloadProgress::-webkit-progress-bar {
+      background: #444; border-radius: 6px;
+    }
+    #downloadProgress::-webkit-progress-value {
+      background: #00b8ff; border-radius: 6px;
+    }
+    #progressLabel { margin-top: 6px; font-size: 13px; }
+
+    #logOutput {
+      margin-top: 12px; flex: 1; /* за да поема останалото пространство */
+      overflow: auto; font-size: 13px; text-align: left;
+      background: #111; padding: 8px; border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>yTube → Audio</h2>
+
+    <div class="input-group">
+      <label for="songInput">Search term or Single-song URL</label>
+      <input type="text" id="songInput"
+             placeholder="artist - pesen / ili direktno link" />
+    </div>
+    <div class="input-group">
+      <label for="playlistInput">Playlist URL</label>
+      <input type="text" id="playlistInput"
+             placeholder="https://youtube.com/playlist?list=..." />
+    </div>
+    <div class="input-group">
+      <label for="formatSelect">Format</label>
+      <select id="formatSelect">
+        <option value="mp3">MP3 (VBR 0 – best)</option>
+        <option value="flac">FLAC</option>
+        <option value="wav">WAV</option>
+      </select>
+    </div>
+    <div class="input-group" id="folderGroup">
+      <input type="text" id="folderPath" readonly
+             placeholder="Download folder" />
+      <button id="browseBtn">Browse…</button>
+    </div>
+
+    <div id="buttonGroup">
+      <button id="downloadBtn">Download</button>
+      <button id="stopBtn" disabled>Stop</button>
+    </div>
+
+    <div id="loading-container">
+      <img src="https://lucida.to/load/cd/cd.png" alt="Loading" />
+      <div id="chronometer">00:00:00</div>
+    </div>
+
+    <div id="progressContainer">
+      <progress id="downloadProgress" max="100" value="0"></progress>
+      <div id="progressLabel">0%</div>
+    </div>
+
+    <div id="logOutput"></div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "join-ra",
+  "version": "1.0.0",
+  "description": "YouTube audio downloader with playlist support",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . join_ra --platform=win32,linux,darwin --arch=x64 --out=dist --overwrite"
+  },
+  "dependencies": {
+    "electron": "^26.0.0",
+    "puppeteer-real-browser": "^1.4.2"
+  },
+  "devDependencies": {
+    "electron-packager": "^17.1.0"
+  }
+}
