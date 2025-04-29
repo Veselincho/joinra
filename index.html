@@ -37,11 +37,37 @@
     select { background: #333; color: #fff; }
     select:focus { outline: 2px solid #0096ff; }
     button {
-      padding: 10px 16px; font-size: 16px;
-      background: #0096ff; border: none; border-radius: 6px;
-      color: #fff; cursor: pointer; margin: 4px;
-    }
-    button:hover { background: #007acc; }
+  padding: 10px 16px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  margin: 4px;
+  transition: background 0.2s ease;
+}
+
+/* Specific button colors */
+#downloadBtn {
+  background: #28a745; /* Green */
+}
+#downloadBtn:hover {
+  background: #218838;
+}
+
+#stopBtn {
+  background: #dc3545; /* Red */
+}
+#stopBtn:hover {
+  background: #c82333;
+}
+#browseBtn{
+  background: #152c9d;
+}
+#browseBtn:hover{
+  background: #5b5a5d;
+}
+
     #buttonGroup { display: flex; justify-content: space-between; }
     #folderGroup { display: flex; gap: 8px; }
     #folderPath { flex: 1; }
