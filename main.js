@@ -5,15 +5,12 @@ const { connect } = require('puppeteer-real-browser');
 
 let mainWindow, globalBrowser, globalYoutubePage;
 let currentProc = null;
-
-// ID на текущата задача и ID на последния Stop
 let currentTaskId = 0;
 let cancelledTaskId = 0;
 
 function logMessage(msg) {
   if (mainWindow) mainWindow.webContents.send('log-message', msg);
 }
-
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -22,21 +19,12 @@ function runYtDlp(args) {
   return new Promise((resolve, reject) => {
     currentProc = spawn('yt-dlp', args);
     let stdout = '';
-
-    currentProc.stdout.on('data', data => {
-      stdout += data.toString();
-    });
-
-    currentProc.stderr.on('data', data => {
-      logMessage(data.toString().trim());
-    });
-
+    currentProc.stdout.on('data', d => (stdout += d.toString()));
+    currentProc.stderr.on('data', d => logMessage(d.toString().trim()));
     currentProc.on('close', code => {
       currentProc = null;
-      if (code === 0) resolve(stdout);
-      else reject(new Error(`yt-dlp exited with code ${code}`));
+      code === 0 ? resolve(stdout) : reject(new Error(`yt-dlp exited with code ${code}`));
     });
-
     currentProc.on('error', reject);
   });
 }
@@ -46,8 +34,7 @@ async function getVideoTitle(videoUrl, taskId) {
   try {
     const jsonStr = await runYtDlp(['--no-playlist', '-j', videoUrl]);
     if (taskId <= cancelledTaskId) throw new Error('cancelled');
-    const info = JSON.parse(jsonStr);
-    return info.title || videoUrl;
+    return JSON.parse(jsonStr).title || videoUrl;
   } catch {
     return videoUrl;
   }
@@ -64,21 +51,21 @@ ipcMain.handle('select-folder', async () => {
   return null;
 });
 
-ipcMain.on('cancel-download', () => {
-  // маркираме всички задачи до currentTaskId за cancel
+// cancel-download now only hides UI when suppressStop=false
+ipcMain.on('cancel-download', (_, { suppressStop = false } = {}) => {
   cancelledTaskId = currentTaskId;
   if (currentProc) {
     currentProc.kill('SIGINT');
     logMessage('🛑 Download cancelled by user');
   }
-  mainWindow.webContents.send('stop-loading');
+  if (!suppressStop) {
+    mainWindow.webContents.send('stop-loading');
+  }
 });
 
 async function downloadMedia({ songName, playlistURL, format, folder }, taskId) {
-  // ако тази задача вече е marked as cancelled
   if (taskId <= cancelledTaskId) return;
 
-  // args за аудио-формат
   const fmtArgs = [];
   switch (format) {
     case 'mp3':
@@ -91,12 +78,10 @@ async function downloadMedia({ songName, playlistURL, format, folder }, taskId) 
       fmtArgs.push('-x', '--audio-format', 'wav');
       break;
   }
-
   const baseOutput = folder
     ? ['-o', path.join(folder, '%(title)s.%(ext)s')]
     : [];
 
-  // --- Единично видео (songName има предимство) ---
   if (songName) {
     let url = songName.startsWith('http')
       ? songName
@@ -114,8 +99,6 @@ async function downloadMedia({ songName, playlistURL, format, folder }, taskId) 
     } catch (err) {
       if (taskId > cancelledTaskId) logMessage(`❌ Failed ${title}: ${err.message}`);
     }
-
-  // --- Плейлист режим ---
   } else if (playlistURL) {
     logMessage('🎶 Fetching playlist video IDs...');
     let idList = '';
@@ -131,37 +114,32 @@ async function downloadMedia({ songName, playlistURL, format, folder }, taskId) 
     }
     if (taskId <= cancelledTaskId) return;
 
-    const ids = idList
-      .split(/\r?\n/)
-      .map(s => s.trim())
-      .filter(Boolean);
+    const ids = idList.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (!ids.length) {
       logMessage('❌ No video IDs found in playlist');
       mainWindow.webContents.send('stop-loading');
       return;
     }
 
-    const total = ids.length;
-    for (let i = 0; i < total; i++) {
+    for (let i = 0; i < ids.length; i++) {
       if (taskId <= cancelledTaskId) break;
-
       const videoUrl = `https://www.youtube.com/watch?v=${ids[i]}`;
       const title = await getVideoTitle(videoUrl, taskId);
       if (taskId <= cancelledTaskId) break;
 
-      logMessage(`⬇️ Downloading (${i+1}/${total}): ${title}`);
+      logMessage(`⬇️ Downloading (${i + 1}/${ids.length}): ${title}`);
       try {
         await runYtDlp(['--no-playlist', ...fmtArgs, ...baseOutput, videoUrl]);
-        logMessage(`✅ Finished ${i+1}/${total}`);
+        logMessage(`✅ Finished ${i + 1}/${ids.length}`);
       } catch (err) {
         if (taskId <= cancelledTaskId) break;
         logMessage(`❌ Failed ${title}: ${err.message}`);
       }
 
-      const overallPct = Math.floor(((i + 1) / total) * 100);
+      const overallPct = Math.floor(((i + 1) / ids.length) * 100);
       mainWindow.webContents.send('download-progress', overallPct);
 
-      if (i < total - 1) {
+      if (i < ids.length - 1) {
         logMessage('⌛ Waiting 1 minute before next...');
         await delay(60_000);
       }
@@ -176,7 +154,6 @@ async function downloadMedia({ songName, playlistURL, format, folder }, taskId) 
 async function launchBrowser() {
   const conn = await connect({
     headless: true,
-    defaultViewport: null,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   globalBrowser = conn.browser;
@@ -211,9 +188,13 @@ function createWindow() {
 
 app.whenReady()
   .then(() => {
-    // Нова задача при всяко готово start
     ipcMain.removeAllListeners('download-song');
     ipcMain.on('download-song', (_, payload) => {
+      // tear down any existing job
+      cancelledTaskId = currentTaskId;
+      if (currentProc) currentProc.kill('SIGINT');
+      // **<- removed** mainWindow.webContents.send('stop-loading');
+
       currentTaskId++;
       downloadMedia(payload, currentTaskId).catch(err => {
         logMessage(`❌ Error: ${err.message}`);

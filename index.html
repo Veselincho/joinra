@@ -14,15 +14,12 @@
       color: #eee;
     }
     .container {
-      /* Запълва целия прозорец */
       width: 100%;
       height: 100%;
       background: #222;
       padding: 30px;
-      /* Махаме скоса, за да няма бели ръбове */
       border-radius: 0;
       overflow: auto;
-      /* Позволява резайз */
       display: flex;
       flex-direction: column;
     }
@@ -37,53 +34,31 @@
     select { background: #333; color: #fff; }
     select:focus { outline: 2px solid #0096ff; }
     button {
-  padding: 10px 16px;
-  font-size: 16px;
-  border: none;
-  border-radius: 6px;
-  color: #fff;
-  cursor: pointer;
-  margin: 4px;
-  transition: background 0.2s ease;
-}
-
-/* Specific button colors */
-#downloadBtn {
-  background: #28a745; /* Green */
-}
-#downloadBtn:hover {
-  background: #218838;
-}
-
-#stopBtn {
-  background: #dc3545; /* Red */
-}
-#stopBtn:hover {
-  background: #c82333;
-}
-#browseBtn{
-  background: #152c9d;
-}
-#browseBtn:hover{
-  background: #5b5a5d;
-}
-
+      padding: 10px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      margin: 4px;
+      transition: background 0.2s ease;
+    }
+    #downloadBtn { background: #28a745; }
+    #downloadBtn:hover { background: #218838; }
+    #stopBtn { background: #dc3545; }
+    #stopBtn:hover { background: #c82333; }
+    #browseBtn{ background: #152c9d; }
+    #browseBtn:hover{ background: #5b5a5d; }
     #buttonGroup { display: flex; justify-content: space-between; }
     #folderGroup { display: flex; gap: 8px; }
     #folderPath { flex: 1; }
-
-    #loading-container {
-      display: none; margin-top: 12px; text-align: center;
-    }
+    #loading-container { display: none; margin-top: 12px; text-align: center; }
     #loading-container img { width: 48px; height: 48px; }
     #chronometer {
       margin-top: 6px; font-size: 14px;
       font-variant-numeric: tabular-nums;
     }
-
-    #progressContainer {
-      display: none; margin-top: 12px; text-align: left;
-    }
+    #progressContainer { display: none; margin-top: 12px; text-align: left; }
     #downloadProgress {
       width: 100%; height: 14px; appearance: none;
       background: #444; border-radius: 6px; overflow: hidden;
@@ -95,9 +70,8 @@
       background: #00b8ff; border-radius: 6px;
     }
     #progressLabel { margin-top: 6px; font-size: 13px; }
-
     #logOutput {
-      margin-top: 12px; flex: 1; /* за да поема останалото пространство */
+      margin-top: 12px; flex: 1;
       overflow: auto; font-size: 13px; text-align: left;
       background: #111; padding: 8px; border-radius: 6px;
     }
@@ -110,7 +84,7 @@
     <div class="input-group">
       <label for="songInput">Search term or Single-song URL</label>
       <input type="text" id="songInput"
-             placeholder="artist - pesen / ili direktno link" />
+             placeholder="artist - song / or direct link" />
     </div>
     <div class="input-group">
       <label for="playlistInput">Playlist URL</label>
@@ -133,7 +107,7 @@
 
     <div id="buttonGroup">
       <button id="downloadBtn">Download</button>
-      <button id="stopBtn" disabled>Stop</button>
+      <button id="stopBtn">Stop</button>
     </div>
 
     <div id="loading-container">

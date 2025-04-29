@@ -29,10 +29,8 @@ playlistInput.addEventListener('input', () => {
 
 downloadBtn.addEventListener('click', startDownload);
 stopBtn.addEventListener('click', () => {
-  // спираме процеса и чистим UI веднага
-  ipcRenderer.send('cancel-download');
+  ipcRenderer.send('cancel-download'); // hides UI
   stopChrono();
-  stopBtn.disabled = true;
 });
 
 [songInput, playlistInput].forEach(el =>
@@ -61,25 +59,40 @@ function stopChrono() {
 }
 
 function startDownload() {
-  const payload = {
-    songName: songInput.value.trim(),
-    playlistURL: playlistInput.value.trim(),
-    format: formatSelect.value,
-    folder: folderPath.value.trim()
-  };
-  if (!payload.songName && !payload.playlistURL) return;
+  // 1) show spinner immediately
+  startChrono();
 
-  // нулираме UI
-  logOutput.innerHTML = '';
-  progressBar.value = 0;
+  // 2) abort old job without hiding
+  ipcRenderer.send('cancel-download', { suppressStop: true });
+
+  // 3) collect inputs
+  const songName    = songInput.value.trim();
+  const playlistURL = playlistInput.value.trim();
+  if (!songName && !playlistURL) {
+    stopChrono();
+    return;
+  }
+
+  // clear the opposite field
+  if (songName) playlistInput.value = '';
+  else          songInput.value    = '';
+
+  // reset UI
+  logOutput.innerHTML       = '';
+  progressBar.value         = 0;
   progressLabel.textContent = '0%';
-  progressCt.style.display = 'block';
+  progressCt.style.display  = 'block';
 
   downloadBtn.disabled = true;
-  stopBtn.disabled   = false;
+  stopBtn.disabled     = false;
 
-  startChrono();
-  ipcRenderer.send('download-song', payload);
+  // 4) fire it off
+  ipcRenderer.send('download-song', {
+    songName,
+    playlistURL: songName ? '' : playlistURL,
+    format: formatSelect.value,
+    folder: folderPath.value.trim()
+  });
 }
 
 ipcRenderer.on('download-progress', (_, pct) => {
@@ -98,5 +111,5 @@ ipcRenderer.on('stop-loading', () => {
   stopChrono();
   progressLabel.textContent = 'Done';
   downloadBtn.disabled = false;
-  stopBtn.disabled   = true;
+  // Stop remains enabled
 });
